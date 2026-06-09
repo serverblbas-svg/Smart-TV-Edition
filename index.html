@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beIN SPORTS UHD - Smart TV Player</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.10.0/video-js.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #0b0d13;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* بەشی لێدەری ڤیدیۆ - گەورە بۆ شاشەی تیڤی */
+        .video-container {
+            flex: 3;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        .video-js {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* بەشی لیستی کەنالەکان لە لای چەپ یان ڕاست */
+        .sidebar {
+            flex: 1;
+            background: #121620;
+            border-right: 3px solid #1a202c;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 15px;
+        }
+
+        .sidebar h2 {
+            color: #00d2ff;
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 2px solid #1a202c;
+            padding-bottom: 10px;
+        }
+
+        .channel-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 5px;
+        }
+
+        /* ستایلی دوگمەی کەنالەکان بۆ تیڤی */
+        .channel-item {
+            background: #1e2533;
+            color: white;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 18px;
+            text-align: right;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease;
+            outline: none; /* لادانی ئاوتلاینی کۆن */
+        }
+
+        /* لۆگۆی ناو دوگمەکان */
+        .channel-logo {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            background: #0b0d13;
+            border-radius: 6px;
+            padding: 3px;
+        }
+
+        .channel-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        /* کاتێک کلیل یان ڕیمۆت دەچێتە سەر دوگمەکە (Focus) */
+        .channel-item:focus, .channel-item.focused {
+            background: #00d2ff;
+            color: #0b0d13;
+            border-color: #ffffff;
+            transform: scale(1.03);
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+        }
+
+        /* کاتێک کەنالەکە لێدەدات (Active) */
+        .channel-item.active {
+            border-color: #00d2ff;
+            background: #153243;
+        }
+
+        /* شاردنەوەی سکڕۆڵباری زیادە */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-container">
+        <video id="smart-tv-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="none">
+        </video>
+    </div>
+
+    <div class="sidebar">
+        <h2>beIN SPORTS UHD</h2>
+        <div id="channel-box" class="channel-list">
+            </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.10.0/video.min.js"></script>
+
+    <script>
+        // 📥 لیستە ڕێکخراوەکەت بۆ بی ئین سپۆرت UHD (٩ کەنالە سەرەکییەکە)
+        const channels = [
+            { name: "1. BEIN SPORTS 1 UHD", logo: "https://logo.m3uassets.com/beinsports1.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798772&extension=ts" },
+            { name: "2. BEIN SPORTS 2 UHD", logo: "https://logo.m3uassets.com/beinsports2.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798773&extension=ts" },
+            { name: "3. BEIN SPORTS 3 UHD", logo: "https://logo.m3uassets.com/beinsports3.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798788&extension=ts" },
+            { name: "4. BEIN SPORTS 4 UHD", logo: "https://logo.m3uassets.com/beinsports4.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798789&extension=ts" },
+            { name: "5. BEIN SPORTS 5 UHD", logo: "https://logo.m3uassets.com/beinsports5.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798790&extension=ts" },
+            { name: "6. BEIN SPORTS 6 UHD", logo: "https://logo.m3uassets.com/beinsports6.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798791&extension=ts" },
+            { name: "7. BEIN SPORTS 7 UHD", logo: "https://logo.m3uassets.com/beinsports7.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798792&extension=ts" },
+            { name: "8. BEIN SPORTS 8 UHD", logo: "https://logo.m3uassets.com/beinsports8.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798793&extension=ts" },
+            { name: "9. BEIN SPORTS 9 UHD", logo: "https://logo.m3uassets.com/beinsports9.png", url: "http://main.light-ott.net/play/live.php?mac=A0:BB:3E:02:40:2B&stream=798794&extension=ts" }
+        ];
+
+        const player = videojs('smart-tv-player', { fluid: false, autoplay: true, liveui: true });
+        const channelBox = document.getElementById('channel-box');
+        let currentFocusIndex = 0;
+
+        // دروستکردنی دوگمەی کەنالەکان لەسەر شاشە
+        channels.forEach((ch, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'channel-item';
+            btn.setAttribute('tabindex', '0'); // ڕێگەدان بە فووکس کردنی ڕیمۆت
+            btn.innerHTML = `
+                <img class="channel-logo" src="${ch.logo}" onerror="this.src='https://cdn-icons-png.flaticon.com/128/857/857455.png'">
+                <span class="channel-name">${ch.name}</span>
+            `;
+            
+            btn.onclick = function() {
+                playChannel(index);
+            };
+
+            channelBox.appendChild(btn);
+        });
+
+        const buttons = document.querySelectorAll('.channel-item');
+
+        function playChannel(index) {
+            buttons.forEach(b => b.classList.remove('active'));
+            buttons[index].classList.add('active');
+            
+            player.reset();
+            
+            // جۆری گونجاو بۆ لینکەکانی TS بۆ سەر وێبگەر و تەلەفزیۆن
+            player.src({ src: channels[index].url, type: 'application/x-mpegURL' });
+            player.play().catch(e => {
+                // ئەگەر بە فۆرماتی هلس لێی نەدا، وەک لایڤی ئاسایی تاقی دەکاتەوە
+                player.src({ src: channels[index].url, type: 'video/mp2t' });
+                player.play().catch(err => console.log("Error playing TS"));
+            });
+        }
+
+        // بەڕێوەبردنی فووکس و ڕیمۆتی تەلەفزیۆن
+        function setFocus(index) {
+            if (index >= 0 && index < buttons.length) {
+                buttons[currentFocusIndex].classList.remove('focused');
+                currentFocusIndex = index;
+                buttons[currentFocusIndex].classList.add('focused');
+                buttons[currentFocusIndex].focus();
+                buttons[currentFocusIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // 🎹 گوێگرتن لە دوگمەکانی ڕیمۆت کۆنتڕۆڵ (ArrowUp, ArrowDown, Enter)
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowDown' || event.keyCode === 40) {
+                event.preventDefault();
+                let next = currentFocusIndex + 1;
+                if (next < buttons.length) setFocus(next);
+            }
+            else if (event.key === 'ArrowUp' || event.keyCode === 38) {
+                event.preventDefault();
+                let prev = currentFocusIndex - 1;
+                if (prev >= 0) setFocus(prev);
+            }
+            else if (event.key === 'Enter' || event.keyCode === 13) {
+                event.preventDefault();
+                playChannel(currentFocusIndex);
+            }
+        });
+
+        // دەستپێکردنی ئۆتۆماتیکی کەنالی یەکەم لە کاتی کردنەوەدا
+        if(buttons.length > 0) {
+            setFocus(0);
+            playChannel(0);
+        }
+    </script>
+</body>
+</html>
